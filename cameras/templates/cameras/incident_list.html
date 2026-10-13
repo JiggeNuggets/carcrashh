@@ -1,0 +1,38 @@
+{% extends "cameras/base.html" %}
+{% block title %}Suspected incidents · CrashGuard{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><p class="eyebrow">AI CRASH-SUSPICION PROTOTYPE</p><h1>Suspected incidents</h1><p class="page-subtitle">Heuristic detections awaiting human verification. These are not confirmed crashes.</p></div>
+  <form method="get" class="filter-form">
+    <label for="incident-camera" class="sr-only">Filter by camera</label>
+    <select id="incident-camera" name="camera" onchange="this.form.submit()">
+      <option value="">All cameras</option>
+      {% for cam in cameras %}<option value="{{ cam.pk }}"{% if selected_camera == cam.pk %} selected{% endif %}>{{ cam.name }}</option>{% endfor %}
+    </select>
+  </form>
+</header>
+<aside class="info-strip warning-strip"><span class="info-icon">!</span><p><strong>Human review required.</strong> Suspicion scores combine uncalibrated temporal motion heuristics and must not be interpreted as real-world crash probabilities, injury assessments, or emergency alerts.</p></aside>
+<section class="panel incident-panel">
+  <div class="panel-heading"><div><h2>Detection history</h2><p>Automatically generated evidence from live cameras and recorded-video tests.</p></div></div>
+  {% if incidents %}
+  <div class="incident-table-wrap">
+    <table class="camera-table incident-table">
+      <thead><tr><th>Incident</th><th>Camera</th><th>Detected</th><th>Suspicion</th><th>Provisional severity</th><th>Status</th><th>Evidence</th></tr></thead>
+      <tbody>
+      {% for incident in incidents %}
+        <tr>
+          <td><a class="incident-id" href="{% url 'cameras:incident_detail' incident.pk %}">{{ incident.incident_id|stringformat:"s"|slice:":8" }}</a><small class="source-detail">{{ incident.get_source_display }}</small></td>
+          <td>{{ incident.camera.name }}</td>
+          <td>{{ incident.detected_at|date:"M j, Y · g:i:s A" }}</td>
+          <td><strong>{{ incident.suspicion_score|floatformat:2 }}</strong></td>
+          <td>{{ incident.get_severity_display }}</td>
+          <td><span class="status-pill {{ incident.processing_status }}"><i></i>{{ incident.get_processing_status_display }}</span><small class="source-detail">{{ incident.get_review_status_display }}</small></td>
+          <td>{% if incident.snapshot %}Snapshot{% endif %}{% if incident.snapshot and incident.video_clip %} · {% endif %}{% if incident.video_clip %}Video{% endif %}{% if not incident.snapshot and not incident.video_clip %}<span class="muted">Pending</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="empty-state"><h3>No suspected incidents</h3><p>AI-generated candidates will appear here when temporal evidence reaches a camera's configured threshold.</p></div>{% endif %}
+</section>
+{% endblock %}

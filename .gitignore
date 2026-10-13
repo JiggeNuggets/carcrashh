@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*.sqlite3
+.venv/
+venv/
+.env
+staticfiles/
+.idea/
+.vscode/
+.DS_Store
+
+# Local datasets and third-party dataset checkouts
+/CarCrashDataset/
+/Detection-of-Traffic-Anomaly/
+/ml/dataset_sources/
+/data/
+/datasets/
+/ml/data/
+/ml/datasets/
+
+# Generated training/test artifacts and runtime media
+/ml/smoke_output/
+/media/
+/t_*.test.avi
+/t_*.test.mp4
+/t_*.test.webm

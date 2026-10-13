@@ -1,0 +1,52 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Roadwatch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'cameras/app.css' %}">
+</head>
+<body class="login-body">
+  <main class="login-shell">
+    <section class="login-intro">
+      <a class="brand brand-large" href="/">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span>ROADWATCH<small>CAMERA OPERATIONS</small></span>
+      </a>
+      <div class="login-message">
+        <p class="eyebrow">LOCAL MONITORING CONSOLE</p>
+        <h1>Your cameras.<br><em>One clear view.</em></h1>
+        <p>Manage authorized USB and RTSP sources from a focused local operations dashboard.</p>
+      </div>
+      <div class="grid-decoration" aria-hidden="true"></div>
+    </section>
+    <section class="login-card-wrap">
+      <form method="post" class="login-card">
+        {% csrf_token %}
+        <div>
+          <p class="eyebrow">SECURE ACCESS</p>
+          <h2>Welcome back</h2>
+          <p class="muted">Sign in with your operator account.</p>
+        </div>
+        {% if form.errors %}<div class="form-alert error">The username or password is incorrect.</div>{% endif %}
+        {% if next and user.is_authenticated %}<div class="form-alert error">Your account cannot access this page.</div>{% endif %}
+        <label class="field">
+          <span>Username</span>
+          <input type="text" name="username" autocomplete="username" autofocus required value="{{ form.username.value|default:'' }}">
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        <button class="button primary full" type="submit">Sign in to console <span>→</span></button>
+        <p class="login-footnote">Access is limited to authorized camera operators.</p>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

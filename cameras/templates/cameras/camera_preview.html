@@ -1,0 +1,161 @@
+{% extends "cameras/base.html" %}
+{% load static %}
+{% block title %}{{ camera.name }} · Live preview{% endblock %}
+{% block content %}
+<header class="page-header compact-header">
+  <div>
+    <a class="back-link" href="{% url 'cameras:list' %}">← Back to cameras</a>
+    <p class="eyebrow">LIVE PREVIEW</p>
+    <h1>{{ camera.name }}</h1>
+    <p class="page-subtitle">{{ camera.location|default:"Location not specified" }} · {{ camera.get_source_type_display }}</p>
+  </div>
+  <a class="button ghost" href="{% url 'cameras:edit' camera.pk %}">Edit camera</a>
+</header>
+
+{% if camera.enabled %}
+<div class="preview-layout" data-status-url="{% url 'cameras:status' camera.pk %}" data-ai-status-url="{% url 'cameras:ai_status' camera.pk %}" data-ai-toggle-url="{% url 'cameras:ai_toggle' camera.pk %}" data-snapshot-url="{% url 'cameras:take_snapshot' camera.pk %}" data-trigger-url="{% url 'cameras:trigger_clip' camera.pk %}" data-csrf="{{ csrf_token }}">
+  <div class="preview-main">
+    <section class="video-panel">
+      <div class="video-stage">
+        <img id="live-stream" src="{% url 'cameras:stream' camera.pk %}" data-normal-src="{% url 'cameras:stream' camera.pk %}" data-ai-src="{% url 'cameras:ai_stream' camera.pk %}" alt="Live video from {{ camera.name }}">
+        <div class="video-label"><span class="live-dot"></span> LIVE</div>
+        <div class="video-corners" aria-hidden="true"></div>
+      </div>
+      <div class="stream-toolbar">
+        <div class="stream-status" id="stream-status" data-status="connecting">
+          <span class="status-spinner"></span>
+          <div><strong>Connecting to camera...</strong><small>The preview can take a few seconds to start.</small></div>
+        </div>
+        <div class="stream-actions">
+          <label class="post-duration">Preview
+            <select id="preview-mode">
+              <option value="normal">Normal live view</option>
+              <option value="ai"{% if not camera.ai_enabled %} disabled{% endif %}>AI detection view</option>
+            </select>
+          </label>
+          <button class="button ghost compact" id="btn-ai-toggle" type="button">{% if camera.ai_enabled %}Disable AI{% else %}Enable AI{% endif %}</button>
+          <button class="button secondary compact" id="btn-snapshot" type="button">Capture snapshot</button>
+          <label class="post-duration">Post-event
+            <select id="post-event-seconds">
+              {% for seconds in post_event_options %}<option value="{{ seconds }}"{% if seconds == 8 %} selected{% endif %}>{{ seconds }}s</option>{% endfor %}
+            </select>
+          </label>
+          <button class="button primary compact record-trigger-btn" id="btn-trigger-clip" type="button">
+            <span class="record-dot">●</span> Generate test incident clip
+          </button>
+        </div>
+      </div>
+      <div class="action-feedback" id="action-feedback" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="panel preview-recordings">
+      <div class="panel-heading">
+        <div><h2>Saved video clips</h2><p>Recent test incident captures from this camera.</p></div>
+        <a class="button ghost compact" href="{% url 'cameras:recordings' %}?camera={{ camera.pk }}">View all</a>
+      </div>
+      {% if clips %}
+      <div class="preview-media-grid">
+        {% for clip in clips %}
+        <article class="preview-media-card">
+          <video controls preload="metadata"{% if clip.thumbnail %} poster="{% url 'cameras:clip_thumbnail' clip.pk %}"{% endif %}>
+            <source src="{% url 'cameras:clip_view' clip.pk %}" type="video/mp4">
+          </video>
+          <div><strong>{{ clip.title }}</strong><small>{{ clip.duration_seconds }}s · {{ clip.created_at|date:"M j, Y · g:i A" }}</small></div>
+          <div class="recent-media-actions">
+            <a class="button compact ghost" href="{% url 'cameras:clip_view' clip.pk %}" target="_blank" rel="noopener">Preview</a>
+            <a class="button compact secondary" href="{% url 'cameras:clip_download' clip.pk %}">Download</a>
+            <form method="post" action="{% url 'cameras:clip_delete' clip.pk %}" onsubmit="return confirm('Permanently delete this test incident clip?');">{% csrf_token %}<button class="button compact danger-ghost" type="submit">Delete</button></form>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}<p class="inline-empty">No clips saved for this camera yet.</p>{% endif %}
+    </section>
+
+    <section class="panel preview-recordings">
+      <div class="panel-heading"><div><h2>Saved snapshots</h2><p>Recent still frames from this camera.</p></div></div>
+      {% if snapshots %}
+      <div class="preview-snapshot-grid">
+        {% for snap in snapshots %}
+        <article>
+          <a href="{% url 'cameras:snapshot_view' snap.pk %}" target="_blank" rel="noopener"><img src="{% url 'cameras:snapshot_view' snap.pk %}" alt="Snapshot from {{ camera.name }}"></a>
+          <small>{{ snap.created_at|date:"M j · g:i A" }}</small>
+          <div class="recent-media-actions compact-actions">
+            <a href="{% url 'cameras:snapshot_view' snap.pk %}" target="_blank" rel="noopener">Preview</a>
+            <a href="{% url 'cameras:snapshot_download' snap.pk %}">Download</a>
+            <form method="post" action="{% url 'cameras:snapshot_delete' snap.pk %}" onsubmit="return confirm('Delete this snapshot?');">{% csrf_token %}<button class="link-delete" type="submit">Delete</button></form>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}<p class="inline-empty">No snapshots saved for this camera yet.</p>{% endif %}
+    </section>
+
+    <section class="panel preview-recordings">
+      <div class="panel-heading">
+        <div><h2>Latest suspected incidents</h2><p>Prototype heuristic detections requiring human verification.</p></div>
+        <a class="button ghost compact" href="{% url 'cameras:incidents' %}?camera={{ camera.pk }}">View all incidents</a>
+      </div>
+      {% if incidents %}
+      <div class="incident-compact-list">
+        {% for incident in incidents %}
+        <a href="{% url 'cameras:incident_detail' incident.pk %}">
+          <strong>{{ incident.incident_id|stringformat:"s"|slice:":8" }}</strong>
+          <span>{{ incident.detected_at|date:"M j, Y · g:i A" }}</span>
+          <span>Suspicion {{ incident.score_percent }}%</span>
+          <span>{{ incident.get_processing_status_display }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}<p class="inline-empty">No suspected incidents have been generated for this camera.</p>{% endif %}
+    </section>
+  </div>
+
+  <aside class="preview-sidebar">
+    <div class="aside-card ai-health-card">
+      <p class="eyebrow">AI DETECTION</p>
+      <h3 id="ai-status">{% if camera.ai_enabled %}Starting{% else %}Disabled{% endif %}</h3>
+      <p id="ai-message" class="buffer-hint">{% if camera.ai_enabled %}Waiting for model status.{% else %}Enable AI to analyze sampled frames.{% endif %}</p>
+      <div class="buffer-metric-grid">
+        <div class="metric-mini"><small>Vehicles</small><strong id="ai-vehicles">0</strong></div>
+        <div class="metric-mini"><small>Inference FPS</small><strong id="ai-fps">0.0</strong></div>
+        <div class="metric-mini"><small>Queue</small><strong id="ai-queue">0 / 2</strong></div>
+        <div class="metric-mini"><small>Dropped</small><strong id="ai-dropped">0</strong></div>
+        <div class="metric-mini"><small>Suspicion</small><strong id="ai-score">0.00</strong></div>
+        <div class="metric-mini"><small>Temporal model</small><strong id="ai-temporal">Off</strong></div>
+        <div class="metric-mini"><small>Threshold</small><strong>{{ camera.crash_suspicion_threshold|floatformat:2 }}</strong></div>
+      </div>
+      <p class="buffer-hint">Latest event: <span id="ai-latest-event">None</span></p>
+      <p class="prototype-warning">Suspicion scores are uncalibrated heuristics—not verified crashes or probabilities.</p>
+    </div>
+    <div class="aside-card buffer-card">
+      <p class="eyebrow">WORKER HEALTH</p>
+      <h3 id="health-status">Connecting</h3>
+      <div class="buffer-metric-grid">
+        <div class="metric-mini"><small>Camera</small><strong id="health-name">{{ camera.name }}</strong></div>
+        <div class="metric-mini"><small>Source</small><strong id="health-source">{{ camera.get_source_type_display }}</strong></div>
+        <div class="metric-mini"><small>Current FPS</small><strong id="health-fps">0.0</strong></div>
+        <div class="metric-mini"><small>Worker</small><strong id="health-worker">Connecting</strong></div>
+        <div class="metric-mini"><small>Buffer</small><strong id="buf-state">{% if camera.buffer_enabled %}Enabled{% else %}Disabled{% endif %}</strong></div>
+        <div class="metric-mini"><small>Configured</small><strong id="buf-window">{{ camera.buffer_seconds }}s</strong></div>
+        <div class="metric-mini"><small>Buffered</small><strong id="buf-cached">0.0s</strong></div>
+        <div class="metric-mini"><small>Frames</small><strong id="buf-frames">0</strong></div>
+      </div>
+      <p class="buffer-hint">Last frame: <span id="health-last-frame">Waiting for a frame</span></p>
+    </div>
+    <div class="aside-card details-card">
+      <p class="eyebrow">SOURCE DETAILS</p>
+      <dl>
+        <div><dt>Type</dt><dd>{{ camera.get_source_type_display }}</dd></div>
+        <div><dt>Source</dt><dd>{{ camera.source_label }}</dd></div>
+        <div><dt>Location</dt><dd>{{ camera.location|default:"Not specified" }}</dd></div>
+        <div><dt>Last tested</dt><dd>{% if camera.last_tested_at %}{{ camera.last_tested_at|date:"M j, Y · g:i A" }}{% else %}Never{% endif %}</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+{% else %}
+<section class="panel disabled-preview"><h2>This camera is disabled</h2><p>Enable it from the camera list before opening a live preview.</p><a class="button primary" href="{% url 'cameras:list' %}">Return to cameras</a></section>
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if camera.enabled %}<script src="{% static 'cameras/preview.js' %}"></script>{% endif %}{% endblock %}

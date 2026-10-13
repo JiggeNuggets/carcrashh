@@ -1,0 +1,99 @@
+{% extends "cameras/base.html" %}
+{% load static %}
+{% block title %}{{ page_title }} · Roadwatch{% endblock %}
+{% block content %}
+<header class="page-header compact-header">
+  <div>
+    <a class="back-link" href="{% url 'cameras:list' %}">← Back to cameras</a>
+    <p class="eyebrow">CAMERA SETUP</p>
+    <h1>{{ page_title }}</h1>
+    <p class="page-subtitle">Test the source, then save it to the local monitoring console.</p>
+  </div>
+</header>
+
+<div class="form-layout">
+  <form method="post" class="panel camera-form" id="camera-form" data-test-url="{{ test_url }}" data-camera-id="{{ camera.pk|default:'' }}">
+    {% csrf_token %}
+    {{ form.test_token }}
+    {% if form.non_field_errors %}<div class="form-alert error">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="form-section">
+      <div class="section-number">01</div>
+      <div class="section-fields">
+        <div class="section-title"><h2>Camera details</h2><p>Use a name operators will recognize quickly.</p></div>
+        <label class="field"><span>Name <b>*</b></span>{{ form.name }}{{ form.name.errors }}</label>
+        <label class="field"><span>Location <small>OPTIONAL</small></span>{{ form.location }}{{ form.location.errors }}</label>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="section-number">02</div>
+      <div class="section-fields">
+        <div class="section-title"><h2>Video source</h2><p>Choose hardware attached to this server or a network stream.</p></div>
+        <div class="source-choice" role="radiogroup" aria-label="Source type">
+          {% for value, label in form.source_type.field.choices %}
+          <label class="source-option">
+            <input type="radio" name="source_type" value="{{ value }}" {% if form.source_type.value == value %}checked{% endif %}>
+            <span class="source-option-card">
+              <i class="source-choice-icon {% if value == 'rtsp' %}network{% endif %}"></i>
+              <strong>{{ label }}</strong>
+              <small>{% if value == 'usb' %}Physically connected to this computer{% else %}Authorized network camera URL{% endif %}</small>
+            </span>
+          </label>
+          {% endfor %}
+        </div>
+        {{ form.source_type.errors }}
+        <div data-source-group="usb">
+          <label class="field"><span>USB device index <b>*</b></span>{{ form.usb_device_index }}<small class="help">{{ form.usb_device_index.help_text }}</small>{{ form.usb_device_index.errors }}</label>
+        </div>
+        <div data-source-group="rtsp">
+          <label class="field"><span>RTSP URL <b>*</b></span>{{ form.rtsp_url }}<small class="help">{{ form.rtsp_url.help_text }}</small>{{ form.rtsp_url.errors }}</label>
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="section-number">03</div>
+      <div class="section-fields">
+        <div class="section-title"><h2>Verify connection</h2><p>The source must return a video frame before it can be saved.</p></div>
+        <button class="button secondary test-button" id="test-connection" type="button"><span class="test-icon">⌁</span> Test connection</button>
+        <div class="test-result" id="test-result" role="status" aria-live="polite"></div>
+        <label class="switch-row">{{ form.enabled }}<span class="switch-ui"></span><span><strong>Camera enabled</strong><small>Allow operators to open the live preview.</small></span></label>
+        <label class="switch-row">{{ form.buffer_enabled }}<span class="switch-ui"></span><span><strong>Continuous pre-crash buffer</strong><small>Keep rolling video frames in memory in background.</small></span></label>
+        <label class="field"><span>Buffer duration</span>{{ form.buffer_seconds }}<small class="help">{{ form.buffer_seconds.help_text }} {% if camera %}Currently configured: {{ camera.buffer_seconds }} seconds.{% endif %}</small>{{ form.buffer_seconds.errors }}</label>
+      </div>
+    </div>
+    <div class="form-section last">
+      <div class="section-number">04</div>
+      <div class="section-fields">
+        <div class="section-title"><h2>AI detection</h2><p>Optional YOLO/ByteTrack analysis for suspected collisions requiring human review.</p></div>
+        <label class="switch-row">{{ form.ai_enabled }}<span class="switch-ui"></span><span><strong>Enable AI detection</strong><small>Uses sampled copies of the existing stream; normal preview remains available.</small></span></label>
+        <div class="ai-settings-grid">
+          <label class="field"><span>Detection confidence</span>{{ form.ai_confidence_threshold }}<small class="help">{{ form.ai_confidence_threshold.help_text }}</small>{{ form.ai_confidence_threshold.errors }}</label>
+          <label class="field"><span>AI processing rate</span>{{ form.ai_frame_rate }}<small class="help">{{ form.ai_frame_rate.help_text }}</small>{{ form.ai_frame_rate.errors }}</label>
+          <label class="field"><span>Inference resolution</span>{{ form.ai_inference_size }}<small class="help">{{ form.ai_inference_size.help_text }}</small>{{ form.ai_inference_size.errors }}</label>
+          <label class="field"><span>Crash suspicion threshold</span>{{ form.crash_suspicion_threshold }}<small class="help">{{ form.crash_suspicion_threshold.help_text }}</small>{{ form.crash_suspicion_threshold.errors }}</label>
+          <label class="field"><span>Incident cooldown</span>{{ form.incident_cooldown_seconds }}<small class="help">{{ form.incident_cooldown_seconds.help_text }}</small>{{ form.incident_cooldown_seconds.errors }}</label>
+          <label class="field"><span>AI post-event recording</span>{{ form.ai_post_event_seconds }}<small class="help">{{ form.ai_post_event_seconds.help_text }}</small>{{ form.ai_post_event_seconds.errors }}</label>
+        </div>
+        <div class="ai-config-status"><span class="status-pill {% if camera.ai_enabled %}connected{% else %}disabled{% endif %}"><i></i>{% if camera.ai_enabled %}Configured to run{% else %}Disabled{% endif %}</span><small>The live preview reports the actual model and inference status.</small></div>
+      </div>
+    </div>
+    <footer class="form-footer">
+      <a class="button ghost" href="{% url 'cameras:list' %}">Cancel</a>
+      <button class="button primary" type="submit">Save camera</button>
+    </footer>
+  </form>
+  <aside class="setup-aside">
+    <div class="aside-card">
+      <p class="eyebrow">BEFORE YOU CONNECT</p>
+      <h3>Camera checklist</h3>
+      <ul class="check-list">
+        <li>You own or are authorized to access this camera.</li>
+        <li>USB hardware is attached to the computer running Django.</li>
+        <li>RTSP is enabled and reachable from this computer.</li>
+        <li>No other program has exclusive control of the source.</li>
+      </ul>
+    </div>
+    <div class="privacy-card"><span>⌾</span><p><strong>Credential privacy</strong>Saved RTSP credentials are not shown again and are excluded from application logs.</p></div>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'cameras/camera-form.js' %}"></script>{% endblock %}

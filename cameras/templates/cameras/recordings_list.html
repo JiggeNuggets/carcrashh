@@ -1,0 +1,69 @@
+{% extends "cameras/base.html" %}
+{% block title %}Recordings & snapshots · Roadwatch{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><p class="eyebrow">SECURE MEDIA ARCHIVE</p><h1>Recordings & snapshots</h1><p class="page-subtitle">Authenticated access to incident clips and camera snapshots.</p></div>
+  <form method="get" class="filter-form">
+    <label for="camera-select" class="sr-only">Filter by camera</label>
+    <select id="camera-select" name="camera" onchange="this.form.submit()">
+      <option value="">All cameras</option>
+      {% for cam in cameras %}<option value="{{ cam.pk }}"{% if selected_camera == cam.pk %} selected{% endif %}>{{ cam.name }}</option>{% endfor %}
+    </select>
+  </form>
+</header>
+
+<section class="panel recording-panel">
+  <div class="panel-heading"><div><h2>Saved video clips</h2><p>Available rolling pre-event footage plus configured post-event footage.</p></div></div>
+  {% if clips %}
+  <div class="clips-grid">
+    {% for clip in clips %}
+    <article class="clip-card">
+      <div class="clip-video-stage">
+        <video controls preload="metadata"{% if clip.thumbnail %} poster="{% url 'cameras:clip_thumbnail' clip.pk %}"{% endif %}>
+          <source src="{% url 'cameras:clip_view' clip.pk %}" type="video/mp4">
+          Your browser does not support MP4 playback.
+        </video>
+        <span class="trigger-badge {{ clip.trigger_type }}">{{ clip.get_trigger_type_display }}</span>
+      </div>
+      <div class="clip-body">
+        <div class="clip-header"><strong>{{ clip.title }}</strong><small class="muted">{{ clip.created_at|date:"M j, Y · g:i A" }}</small></div>
+        <div class="clip-meta">
+          <div><small>Camera</small><span>{{ clip.camera.name }}</span></div>
+          <div><small>Duration</small><span>{{ clip.duration_seconds }}s</span></div>
+          <div><small>Pre-event</small><span>{{ clip.pre_buffer_seconds }}s</span></div>
+          <div><small>Size</small><span>{{ clip.file_size_display }}</span></div>
+        </div>
+        <div class="clip-actions">
+          <a class="button compact ghost" href="{% url 'cameras:clip_view' clip.pk %}" target="_blank" rel="noopener">Preview</a>
+          <a class="button compact secondary" href="{% url 'cameras:clip_download' clip.pk %}">Download</a>
+          <form method="post" action="{% url 'cameras:clip_delete' clip.pk %}" onsubmit="return confirm('Permanently delete this incident clip?');">{% csrf_token %}<button class="button compact danger-ghost" type="submit">Delete</button></form>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}<div class="empty-state"><h3>No incident clips recorded yet</h3><p>Generate a test incident clip from a live camera preview.</p></div>{% endif %}
+</section>
+
+<section class="panel recording-panel">
+  <div class="panel-heading"><div><h2>Saved snapshots</h2><p>Still frames captured manually by an operator.</p></div></div>
+  {% if snapshots %}
+  <div class="snapshots-grid">
+    {% for snap in snapshots %}
+    <article class="snapshot-card">
+      <a href="{% url 'cameras:snapshot_view' snap.pk %}" target="_blank" rel="noopener"><img src="{% url 'cameras:snapshot_view' snap.pk %}" alt="Snapshot from {{ snap.camera.name }}"></a>
+      <div class="snapshot-body">
+        <strong>{{ snap.camera.name }}</strong><small class="muted">{{ snap.created_at|date:"M j, Y · g:i A" }}</small>
+        {% if snap.note %}<p class="snapshot-note">{{ snap.note }}</p>{% endif %}
+        <div class="snapshot-actions">
+          <a class="button compact ghost" href="{% url 'cameras:snapshot_view' snap.pk %}" target="_blank" rel="noopener">Preview</a>
+          <a class="button compact secondary" href="{% url 'cameras:snapshot_download' snap.pk %}">Download</a>
+          <form method="post" action="{% url 'cameras:snapshot_delete' snap.pk %}" onsubmit="return confirm('Delete this snapshot?');">{% csrf_token %}<button class="button compact danger-ghost" type="submit">Delete</button></form>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}<div class="empty-state"><h3>No snapshots taken yet</h3><p>Use Capture snapshot on a live camera preview.</p></div>{% endif %}
+</section>
+{% endblock %}

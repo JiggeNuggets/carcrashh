@@ -1,0 +1,70 @@
+{% extends "cameras/base.html" %}
+{% block title %}Cameras · Roadwatch{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">CAMERA OPERATIONS</p>
+    <h1>Cameras</h1>
+    <p class="page-subtitle">Manage video sources connected to this monitoring server.</p>
+  </div>
+  <a class="button primary" href="{% url 'cameras:add' %}"><span class="plus">+</span> Add camera</a>
+</header>
+
+<section class="metric-row" aria-label="Camera summary">
+  <article class="metric-card"><span class="metric-icon cyan">●</span><div><strong>{{ counts.total }}</strong><small>Total cameras</small></div></article>
+  <article class="metric-card"><span class="metric-icon green">●</span><div><strong>{{ counts.enabled }}</strong><small>Enabled</small></div></article>
+  <article class="metric-card"><span class="metric-icon blue">●</span><div><strong>{{ counts.connected }}</strong><small>Last check connected</small></div></article>
+</section>
+
+<section class="panel">
+  <div class="panel-heading">
+    <div><h2>Saved sources</h2><p>Connection status reflects the latest test or preview session.</p></div>
+  </div>
+  {% if cameras %}
+    <div class="camera-table-wrap">
+      <table class="camera-table">
+        <thead><tr><th>Camera</th><th>Source</th><th>Location</th><th>Status</th><th>State</th><th><span class="sr-only">Actions</span></th></tr></thead>
+        <tbody>
+          {% for camera in cameras %}
+          <tr>
+            <td><div class="camera-name"><span class="camera-symbol"><i></i></span><div><strong>{{ camera.name }}</strong><small>Added {{ camera.created_at|date:"M j, Y" }}</small></div></div></td>
+            <td><strong class="source-type">{{ camera.get_source_type_display }}</strong><small class="source-detail">{{ camera.source_label }}</small></td>
+            <td>{% if camera.location %}{{ camera.location }}{% else %}<span class="muted">Not specified</span>{% endif %}</td>
+            <td>
+              <span class="status-pill {{ camera.last_connection_status }}"><i></i>{{ camera.get_last_connection_status_display }}</span>
+              {% if camera.last_tested_at %}<small class="tested-time">{{ camera.last_tested_at|timesince }} ago</small>{% endif %}
+            </td>
+            <td><span class="state-label {% if camera.enabled %}on{% endif %}">{% if camera.enabled %}Enabled{% else %}Disabled{% endif %}</span></td>
+            <td>
+              <div class="row-actions">
+                {% if camera.enabled %}<a class="button compact ghost" href="{% url 'cameras:preview' camera.pk %}">View live</a>{% endif %}
+                <details class="action-menu">
+                  <summary aria-label="Actions for {{ camera.name }}">•••</summary>
+                  <div>
+                    <a href="{% url 'cameras:edit' camera.pk %}">Edit</a>
+                    <form method="post" action="{% url 'cameras:toggle' camera.pk %}">{% csrf_token %}<button type="submit">{% if camera.enabled %}Disable{% else %}Enable{% endif %}</button></form>
+                    <a class="danger-link" href="{% url 'cameras:delete' camera.pk %}">Delete</a>
+                  </div>
+                </details>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <span class="empty-icon"><i></i></span>
+      <h3>No cameras yet</h3>
+      <p>Add a USB camera attached to this server or an authorized RTSP stream.</p>
+      <a class="button primary" href="{% url 'cameras:add' %}">Add your first camera</a>
+    </div>
+  {% endif %}
+</section>
+
+<aside class="info-strip">
+  <span class="info-icon">i</span>
+  <p><strong>USB cameras connect to the server computer.</strong> A camera plugged into a visitor’s computer cannot be reached by this Django app. That requires browser camera access through WebRTC or <code>getUserMedia()</code>.</p>
+</aside>
+{% endblock %}

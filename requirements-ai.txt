@@ -1,0 +1,9 @@
+-r requirements.txt
+
+# Ultralytics code and standard pretrained models are AGPL-3.0. Obtain an
+# Ultralytics Enterprise license if the deployment cannot comply with AGPL-3.0.
+ultralytics>=8.4,<9.0
+# ByteTrack association dependency. Declaring it prevents Ultralytics from
+# attempting a runtime package installation on the first tracked frame.
+lap>=0.5.12,<1.0
+onnxruntime>=1.24,<2.0

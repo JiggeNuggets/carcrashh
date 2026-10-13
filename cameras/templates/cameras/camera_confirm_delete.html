@@ -1,0 +1,16 @@
+{% extends "cameras/base.html" %}
+{% block title %}Delete {{ camera.name }} · Roadwatch{% endblock %}
+{% block content %}
+<div class="confirm-wrap">
+  <section class="panel confirm-card">
+    <span class="danger-icon">!</span>
+    <p class="eyebrow">DELETE CAMERA</p>
+    <h1>Remove “{{ camera.name }}”?</h1>
+    <p>This removes the saved camera configuration from this local system. Any active preview will stop.</p>
+    <div class="confirm-actions">
+      <a class="button ghost" href="{% url 'cameras:list' %}">Cancel</a>
+      <form method="post">{% csrf_token %}<button class="button danger" type="submit">Delete camera</button></form>
+    </div>
+  </section>
+</div>
+{% endblock %}

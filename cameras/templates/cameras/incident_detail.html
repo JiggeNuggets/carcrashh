@@ -1,0 +1,34 @@
+{% extends "cameras/base.html" %}
+{% block title %}Suspected incident {{ incident.incident_id|stringformat:"s"|slice:":8" }} · CrashGuard{% endblock %}
+{% block content %}
+<header class="page-header compact-header">
+  <div><a class="back-link" href="{% url 'cameras:incidents' %}">← Back to incidents</a><p class="eyebrow">PENDING HUMAN VERIFICATION</p><h1>Incident {{ incident.incident_id|stringformat:"s"|slice:":8" }}</h1><p class="page-subtitle">{{ incident.camera.name }} · {{ incident.detected_at|date:"M j, Y · g:i:s A" }}</p></div>
+</header>
+<aside class="info-strip warning-strip"><span class="info-icon">!</span><p><strong>Not a confirmed accident.</strong> This record was created by prototype computer-vision heuristics. Review the evidence and surrounding context before drawing any conclusion.</p></aside>
+<div class="incident-detail-grid">
+  <section class="panel incident-evidence">
+    <div class="panel-heading"><div><h2>Evidence</h2><p>Original camera frames are preserved separately from AI overlays.</p></div></div>
+    {% if incident.video_clip %}
+    <video controls preload="metadata"{% if incident.video_clip.thumbnail %} poster="{% url 'cameras:clip_thumbnail' incident.video_clip.pk %}"{% endif %}><source src="{% url 'cameras:clip_view' incident.video_clip.pk %}" type="video/mp4"></video>
+    <div class="evidence-actions"><a class="button secondary" href="{% url 'cameras:clip_download' incident.video_clip.pk %}">Download video</a></div>
+    {% elif incident.snapshot %}<p class="inline-empty">Video evidence is {{ incident.get_processing_status_display|lower }}.</p>{% else %}<p class="inline-empty">Evidence generation is pending or failed.</p>{% endif %}
+    {% if incident.snapshot %}<a class="incident-snapshot" href="{% url 'cameras:snapshot_view' incident.snapshot.pk %}" target="_blank" rel="noopener"><img src="{% url 'cameras:snapshot_view' incident.snapshot.pk %}" alt="Incident snapshot"><span>Open full snapshot</span></a>{% endif %}
+  </section>
+  <aside class="aside-card incident-facts">
+    <p class="eyebrow">HEURISTIC SUMMARY</p>
+    <dl>
+      <div><dt>Suspicion score</dt><dd>{{ incident.suspicion_score|floatformat:3 }} (uncalibrated)</dd></div>
+      <div><dt>Provisional severity</dt><dd>{{ incident.get_severity_display }}</dd></div>
+      <div><dt>Processing</dt><dd>{{ incident.get_processing_status_display }}</dd></div>
+      <div><dt>Review</dt><dd>{{ incident.get_review_status_display }}</dd></div>
+      <div><dt>Source</dt><dd>{{ incident.get_source_display }}</dd></div>
+      <div><dt>Detected categories</dt><dd>{{ incident.vehicle_categories|join:", "|default:"None recorded" }}</dd></div>
+      <div><dt>Trajectory candidate</dt><dd>{{ incident.indicators.trajectory_collision_candidate|yesno:"Yes,No" }}</dd></div>
+      <div><dt>Sudden motion change</dt><dd>{{ incident.indicators.sudden_motion_change|yesno:"Yes,No" }}</dd></div>
+      <div><dt>Abnormal direction</dt><dd>{{ incident.indicators.abnormal_direction_change|yesno:"Yes,No" }}</dd></div>
+      <div><dt>Stationary afterward</dt><dd>{{ incident.indicators.stationary_after_candidate_impact|yesno:"Yes,No" }}</dd></div>
+    </dl>
+    {% if incident.media_error %}<div class="form-alert error">{{ incident.media_error }}</div>{% endif %}
+  </aside>
+</div>
+{% endblock %}

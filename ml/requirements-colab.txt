@@ -1,0 +1,9 @@
+-r ../requirements.txt
+
+ultralytics>=8.4,<9.0
+lap>=0.5.12,<1.0
+scikit-learn>=1.6,<2.0
+onnx>=1.18,<2.0
+onnxscript>=0.5,<1.0
+onnxruntime>=1.24,<2.0
+gdown>=5.2,<6.0

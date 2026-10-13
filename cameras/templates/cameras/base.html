@@ -1,0 +1,62 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>{% block title %}Roadwatch{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'cameras/app.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="{% url 'cameras:list' %}" aria-label="Roadwatch home">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span>ROADWATCH<small>CAMERA OPERATIONS</small></span>
+      </a>
+      <nav class="main-nav" aria-label="Primary navigation">
+        <a class="nav-link {% if request.resolver_match.url_name != 'recordings' and request.resolver_match.url_name != 'incidents' and request.resolver_match.url_name != 'incident_detail' %}active{% endif %}" href="{% url 'cameras:list' %}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10v10H4zM14 10l6-3v10l-6-3z"/></svg>
+          Cameras
+        </a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'recordings' %}active{% endif %}" href="{% url 'cameras:recordings' %}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polygon points="10,8 16,12 10,16"/></svg>
+          Recordings
+        </a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'incidents' or request.resolver_match.url_name == 'incident_detail' %}active{% endif %}" href="{% url 'cameras:incidents' %}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 17H3zM12 9v5M12 17v1"/></svg>
+          AI incidents
+        </a>
+      </nav>
+      <div class="sidebar-note">
+        <span class="pulse-dot"></span>
+        <div><strong>Local prototype</strong><small>Camera access runs on this server</small></div>
+      </div>
+      <div class="user-panel">
+        <div class="avatar">{{ request.user.username|first|upper }}</div>
+        <div class="user-copy"><strong>{{ request.user.username }}</strong><small>Authorized operator</small></div>
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button class="icon-button" type="submit" title="Sign out" aria-label="Sign out">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></svg>
+          </button>
+        </form>
+      </div>
+    </aside>
+    <main class="main-content">
+      {% if messages %}
+        <div class="message-stack" aria-live="polite">
+          {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+        </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

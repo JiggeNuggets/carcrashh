@@ -1,0 +1,53 @@
+{
+  "audit_date": "2026-10-13",
+  "provenance_policy": "Counts come from locally stored official repository metadata; no labels were generated or inferred.",
+  "dota": {
+    "source": "https://github.com/MoonBlvd/Detection-of-Traffic-Anomaly",
+    "repository_path": "C:\\carrcrash\\Detection-of-Traffic-Anomaly",
+    "annotation_zip_bytes": 10357806,
+    "annotation_zip_sha256": "56209F87398CBF47B9EEEE4B516461E71CD3F97F9DD8C4432773315DB307FF15",
+    "duplicate_annotation_zip_hash_matches_ml_copy": true,
+    "annotation_json_files": 4677,
+    "published_train_ids": 3275,
+    "published_validation_ids": 1402,
+    "published_split_overlap": 0,
+    "ignored_annotations": 61,
+    "usable_annotations": 4616,
+    "original_video_groups": 190,
+    "usable_positive_frame_labels_contiguous": true,
+    "footage_present_locally": false,
+    "boundary_note": "Manifest intervals use official per-frame accident_id labels. DoTA anomaly_end is normally exclusive; one usable source file has a stale summary end beyond num_frames, while its official per-frame labels remain valid and contiguous."
+  },
+  "ccd": {
+    "source": "https://github.com/Cogito2012/CarCrashDataset",
+    "repository_path": "C:\\carrcrash\\CarCrashDataset",
+    "official_drive_folder_id": "1NUwC-bkka0-iPqhEhIgsXWtj0DA2MR-F",
+    "documented_crash_videos": 1500,
+    "documented_normal_videos": 3000,
+    "frames_per_video": 50,
+    "fps": 10,
+    "repository_readme_and_license_present": true,
+    "crash_annotation_text_present_locally": true,
+    "crash_annotation_rows": 1500,
+    "unique_crash_video_ids": 1500,
+    "original_youtube_groups": 133,
+    "deterministic_manifest_counts": {
+      "train": {"crash": 1239, "normal": 2435},
+      "validation": {"crash": 144, "normal": 275},
+      "test": {"crash": 117, "normal": 290}
+    },
+    "crash_annotation_bytes": 276792,
+    "crash_annotation_sha256": "EB793A9B68DC50DFBB2CE3E6BE75A13E625DA93098ADE40E8EB4E0FC2C5C724A",
+    "official_crash_archive_bytes": 793091291,
+    "official_normal_archive_bytes": 6445547827,
+    "footage_present_locally": false,
+    "footage_destination": "Google Drive MyDrive/CrashGuardData/CarCrash/videos"
+  },
+  "cadp": {
+    "source": "https://ankitshah009.github.io/accident_forecasting_traffic_camera.html",
+    "annotation_json_bytes": 568340,
+    "annotation_video_keys": 226,
+    "footage_present_locally": false
+  },
+  "license_note": "Repository code licenses do not necessarily grant rights to underlying footage. Review dataset and source-video terms before download, training, redistribution, or commercial use."
+}
